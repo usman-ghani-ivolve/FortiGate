@@ -1,6 +1,6 @@
 ---
 - name: Create VIP
-  fortios_firewall_vip:
+  fortinet.fortios.fortios_firewall_vip:
     state: present
     firewall_vip:
       id: "{{ vip_id }}"
