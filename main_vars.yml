@@ -103,26 +103,26 @@ ansible_httpapi_port: 443
 # config_selector: ["vpn.ipsec_phase1-interface"]
 
 ########### VPN ###########
-# role: vpn
-#====== P1 ========#
-# action: remove_p1
-# p1_name: "s2s-p1"
-# ip_version: '4'
-# ike_version: '2'
-# remote_gw: '10.82.3.125'
-# local_gw: '10.82.51.20'
-# dhgrp: '14'
-# p1_proposal: ['aes128-sha256']
-# psksecret: '4b7d62f964784846a0e58e4f56245d30237e71dfc10b759066ab2f69'
-# keepalive_freq: '10'
-# dpd: 'on-demand'
-# dpd_retrycount: '3'
-# dpd_retryinterval: '20'
-# keylife: '86400'
-# negotiate_timeout: '30'
-# nattraversal: 'enable'
-# reauth: 'disable'
-# rekey: 'enable'
+role: vpn
+# ====== P1 ========#
+action: remove_p1
+p1_name: "s2s-p1"
+ip_version: '4'
+ike_version: '2'
+remote_gw: '10.82.3.125'
+local_gw: '10.82.51.20'
+dhgrp: '14'
+p1_proposal: ['aes128-sha256']
+psksecret: '4b7d62f964784846a0e58e4f56245d30237e71dfc10b759066ab2f69'
+keepalive_freq: '10'
+dpd: 'on-demand'
+dpd_retrycount: '3'
+dpd_retryinterval: '20'
+keylife: '86400'
+negotiate_timeout: '30'
+nattraversal: 'enable'
+reauth: 'disable'
+rekey: 'enable'
 #====== P1 ========#
 # action: remove_p2
 # p2_name: "s2s-p2-1"

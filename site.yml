@@ -9,6 +9,7 @@
     ansible_httpapi_use_ssl: yes
     ansible_httpapi_validate_certs: no
     ansible_httpapi_port: 443
+  vars_files: ./main_vars.yml
   gather_facts: false
   #   vars_files:
   #     - ./main_vars.yml
