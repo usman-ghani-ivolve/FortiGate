@@ -1,0 +1,89 @@
+config system admin
+  edit admin
+  set ssh-public-key1 "{{ public_key }}"
+  set password {{ admin_password }}
+end
+config system interface
+  edit "port1"
+    set vdom "root"
+    set mode static
+    set alias "WAN"
+    set ip {{ wan_ip }} {{ wan_subnet }}
+    set allowaccess ping
+    set role wan
+  next
+  edit "port2"
+    set vdom "root"
+    set mode static
+    set alias "MGMT"
+    set ip {{ mgmt_ip }} {{ mgmt_subnet }}
+    set allowaccess ping https ssh http telnet
+    set role lan
+  next
+  edit "port3"
+    set vdom "root"
+    set mode static
+    set alias "default"
+    set ip {{ lan_ip }} {{ lan_subnet }}
+    set allowaccess ping
+    set role lan
+  next
+end
+config system dhcp server
+  edit 1
+    set status enable
+    set lease-time 604800
+    set mac-acl-default-action assign
+    set forticlient-on-net-status enable
+    set wifi-ac-service specify
+    set wifi-ac1 0.0.0.0
+    set wifi-ac2 0.0.0.0
+    set wifi-ac3 0.0.0.0
+    set ntp-service specify
+    set domain ''
+    set wins-server1 0.0.0.0
+    set wins-server2 0.0.0.0
+    set default-gateway {{ lan_ip }}
+    set next-server 0.0.0.0
+    set netmask {{ lan_subnet }}
+    set interface "port3"
+    config ip-range
+        edit 1
+            set start-ip {{ dhcp_start}}
+            set end-ip {{ dhcp_end }}
+        next
+    end
+    set timezone-option disable
+    set filename ''
+    set server-type regular
+    set conflicted-ip-timeout 1800
+    set auto-configuration enable
+    set dhcp-settings-from-fortiipam disable
+    set ddns-update disable
+    set vci-match disable
+    set ntp-server1 0.0.0.0
+    set ntp-server2 0.0.0.0
+    set ntp-server3 0.0.0.0
+    set dns-service specify
+    set dns-server1 {{ dns_server }}
+  next
+end
+config router static
+  edit 1
+    set gateway {{ wan_gateway }}
+    set device "port1"
+  next
+end
+config firewall policy
+  edit 1
+    set name "LAN-NAT-TO-INTERNET"
+    set srcintf "port3" 
+    set dstintf "port1"
+    set action accept
+    set srcaddr "all"
+    set dstaddr "all"
+    set schedule "always"
+    set service "ALL"
+    set nat enable
+  next
+end

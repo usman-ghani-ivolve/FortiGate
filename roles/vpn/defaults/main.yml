@@ -1,0 +1,10 @@
+---
+keepalive_freq: '10'
+dpd: 'on-demand'
+dpd_retrycount: '3'
+dpd_retryinterval: '20'
+keylife: '86400'
+negotiate_timeout: '30'
+nattraversal: 'enable'
+reauth: 'disable'
+rekey: 'enable'

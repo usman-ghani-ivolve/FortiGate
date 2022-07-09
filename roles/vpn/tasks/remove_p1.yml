@@ -1,0 +1,18 @@
+---
+- name: Get Tunnel Names
+  fortinet.fortios.fortios_configuration_fact:
+    selectors:
+      - selector: "vpn.ipsec_phase2-interface"
+  register: ipsec_p2
+
+- name: Fail IF Tunnel Exist
+  fail:
+    msg: "Tunnel \"{{p1_name}}\" can't be deleted. Phase2 Interface(s) is associated with it"
+  when: item.phase1name == p1_name
+  loop: "{{ ipsec_p2.meta[0].results }}"
+
+- name: Remove IPSec Phase1 Interface
+  fortios_vpn_ipsec_phase1_interface:
+    state: "absent"
+    vpn_ipsec_phase1_interface:
+      name: "{{ p1_name }}"

@@ -1,0 +1,27 @@
+---
+- name: Configure IPSec Phase2 Interface
+  fortios_vpn_ipsec_phase2_interface:
+    state: "present"
+    vpn_ipsec_phase2_interface:
+      name: "{{ p2_name }}"
+      phase1name: "{{ p1_name }}"
+      proposal: "{{ p2_proposal }}"
+      pfs: "enable"
+      ipv4_df: "disable"
+      replay: "enable"
+      keepalive: "disable"
+      auto_negotiate: "disable"
+      auto_discovery_forwarder: "phase1"
+      auto_discovery_sender: "phase1"
+      keylife_type: "seconds"
+      encapsulation: "tunnel-mode"
+      initiator_ts_narrow: "disable"
+      diffserv: "disable"
+      protocol: "0"
+      src_addr_type: "name"
+      src_port: "0"
+      dst_port: "0"
+      dst_addr_type: "name"
+      keylifeseconds: "{{ keylifeseconds }}"
+      src_name: "{{ p2_name }}-local"
+      dst_name: "{{ p2_name }}-remote"

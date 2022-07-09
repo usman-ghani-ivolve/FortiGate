@@ -1,0 +1,19 @@
+---
+- name: Configure FortiGate
+  collections:
+    - fortinet.fortios
+  hosts: all
+  connection: httpapi
+  vars:
+    ansible_network_os: 'fortios'
+    ansible_httpapi_use_ssl: yes
+    ansible_httpapi_validate_certs: no
+    ansible_httpapi_port: 443
+  gather_facts: false
+  #   vars_files:
+  #     - ./main_vars.yml
+
+  tasks:
+    - name: "{{role}}"
+      import_role:
+        name: "{{role}}"

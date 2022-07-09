@@ -1,0 +1,20 @@
+---
+- name: Create Directory Structure
+  file:
+    path: "{{item}}"
+    state: directory
+  loop:
+    - /tmp/{{ tenant_id }}
+    - /tmp/{{ tenant_id }}/config-drive
+    - /tmp/{{ tenant_id }}/config-drive/openstack
+    - /tmp/{{ tenant_id }}/config-drive/openstack/latest
+    - /tmp/{{ tenant_id }}/config-drive/openstack/content
+
+- name: Render Template
+  template:
+    src: user_data.j2
+    dest: /tmp/{{ tenant_id }}/config-drive/openstack/latest/user_data
+
+- name: Creating Config Drive
+  command:
+    cmd: "xorriso -as mkisofs -V config-2 -o  /tmp/{{ tenant_id }}/FortiGate-{{ tenant_id }}-CFG-Drive.iso  /tmp/{{ tenant_id }}/config-drive"

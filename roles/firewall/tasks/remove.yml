@@ -1,0 +1,10 @@
+- name: Configure Firewall Policy
+  fortios_firewall_policy:
+    state: absent
+    firewall_policy:
+      policyid: "{{ id }}"
+  register: result
+
+- name: Get Response
+  debug:
+    msg: "{{ result }}"

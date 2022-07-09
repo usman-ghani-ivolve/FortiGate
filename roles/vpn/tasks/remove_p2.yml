@@ -1,0 +1,54 @@
+---
+- name: Remove Firewall Policy for Remote Address
+  fortios_firewall_policy:
+    state: absent
+    firewall_policy:
+      policyid: "{{ remote_id }}"
+
+- name: Remove Firewall Policy for Local Address
+  fortios_firewall_policy:
+    state: absent
+    firewall_policy:
+      policyid: "{{ local_id }}"
+
+- name: Get Static Routes
+  fortinet.fortios.fortios_configuration_fact:
+    selectors:
+      - selector: "router_static"
+  register: routes
+
+- name: Get Routes Indices
+  set_fact:
+    seq_num: '{{ seq_num | default([]) + [item["seq-num"]] }}'
+  when:  item.dstaddr == "{{p2_name}}-remote"
+  loop: "{{ routes.meta[0].results }}"
+
+- name: Remove Static Routes
+  fortios_router_static:
+    state: "absent"
+    router_static:
+      seq_num: "{{ item }}"
+  loop: "{{ seq_num }}"
+  when: seq_num is defined
+
+- name: Remove IPSec Phase2 Interface
+  fortios_vpn_ipsec_phase2_interface:
+    state: "absent"
+    vpn_ipsec_phase2_interface:
+      name: "{{ p2_name }}"
+
+- name: Remove Firewall Adress Group
+  fortios_firewall_addrgrp:
+    state: "absent"
+    firewall_addrgrp:
+      name: "{{ p2_name }}-{{ item }}"
+  loop:
+    - remote
+    - local
+      
+- name: Remove Firewall Remote Addresses
+  fortios_firewall_address:
+    state: "absent"
+    firewall_address:
+      name: "{{ item }}"
+  loop: "{{ remote_networks }}"

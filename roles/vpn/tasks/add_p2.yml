@@ -1,0 +1,179 @@
+---
+- name: Phase-1 Prechecks
+  block:
+    - name: Get Phase-1 Tunnels
+      fortinet.fortios.fortios_configuration_fact:
+        selectors:
+          - selector: "vpn.ipsec_phase1-interface"
+      register: ipsec_p1
+    - name: Get Phase-1 Names
+      set_fact:
+        tunnels: "{{ tunnels | default([]) + [item.name] }}"
+      loop: "{{ ipsec_p1.meta[0].results }}"
+    - name: Fail if Phase-1 Does Not Exist
+      fail:
+        msg: "Phase-1 \"{{ p1_name }}\" not found"
+      when: p1_name is not in tunnels
+
+- name: Phase-2 Prechecks
+  block:
+    - name: Get Phase-2 Names
+      fortinet.fortios.fortios_configuration_fact:
+        selectors:
+          - selector: "vpn.ipsec_phase2-interface"
+      register: ipsec_p2
+    - name: Fail IF Phase-2 Exist
+      fail:
+        msg: "Phase-2 \"{{ p2_name }}\" already exist"
+      when: item.name == p2_name
+      loop: "{{ ipsec_p2.meta[0].results }}"
+
+- name: Create Firewall Local Addresses
+  fortios_firewall_address:
+    state: "present"
+    firewall_address:
+      allow_routing: "enable"
+      associated_interface: ""
+      fabric_object: "disable"
+      name: "{{ local_network }}"
+      subnet: "{{ local_network }}"
+      type: "ipmask"
+
+- name: Group Firewall Members for Local Addresses
+  set_fact:
+    local_members: '{{ local_members | default([]) + [{ "name": local_network }] }}'
+
+- name: Create Firewall Local Adress Groups
+  fortios_firewall_addrgrp:
+    state: "present"
+    firewall_addrgrp:
+      allow_routing: "enable"
+      fabric_object: "disable"
+      name: "{{ p2_name }}-local"
+      member: "{{ local_members }}"
+      type: "default"
+
+- name: Create Firewall Remote Addresses
+  fortios_firewall_address:
+    state: "present"
+    firewall_address:
+      allow_routing: "enable"
+      associated_interface: ""
+      fabric_object: "disable"
+      name: "{{ item }}"
+      subnet: "{{ item }}"
+      type: "ipmask"
+  loop: "{{ remote_networks }}"
+
+- name: Group Firewall Members for Remote Addresses
+  set_fact:
+    remote_members: '{{ remote_members | default([]) + [{ "name": item }] }}'
+  loop: "{{ remote_networks }}"
+
+- name: Create Firewall Remote Adress Groups
+  fortios_firewall_addrgrp:
+    state: "present"
+    firewall_addrgrp:
+      allow_routing: "enable"
+      fabric_object: "disable"
+      name: "{{ p2_name }}-remote"
+      member: "{{ remote_members }}"
+      type: "default"
+
+- name: Configure IPSec Phase2 Interface
+  fortios_vpn_ipsec_phase2_interface:
+    state: "present"
+    vpn_ipsec_phase2_interface:
+      name: "{{ p2_name }}"
+      phase1name: "{{ p1_name }}"
+      proposal: "{{ p2_proposal }}"
+      dhgrp: "{{ dhgrp }}"
+      pfs: "enable"
+      ipv4_df: "disable"
+      replay: "enable"
+      keepalive: "disable"
+      auto_negotiate: "disable"
+      auto_discovery_forwarder: "phase1"
+      auto_discovery_sender: "phase1"
+      keylife_type: "seconds"
+      encapsulation: "tunnel-mode"
+      initiator_ts_narrow: "disable"
+      diffserv: "disable"
+      protocol: "0"
+      src_addr_type: "name"
+      src_port: "0"
+      dst_port: "0"
+      dst_addr_type: "name"
+      keylifeseconds: "{{ keylifeseconds }}"
+      src_name: "{{ p2_name }}-local"
+      dst_name: "{{ p2_name }}-remote"
+
+- name: Configure Static Routes
+  fortios_router_static:
+    state: "present"
+    router_static:
+      device: "{{ p1_name }}"
+      dstaddr: "{{ p2_name }}-remote"
+
+- name: Configure Static Routes 1
+  fortios_router_static:
+    state: "present"
+    router_static:
+      blackhole: "enable"
+      dstaddr: "{{ p2_name }}-remote"
+      distance: "254"
+
+- name: Get Interface Names
+  fortinet.fortios.fortios_configuration_fact:
+    selectors:
+      - selector: "system_interface"
+  register: ifaces
+
+- set_fact:
+    local_net: "{{local_network | ipaddr('network')}}"
+
+- name: Set Local Interface Variable
+  set_fact:
+    p2_intf: "{{ item.name }}"
+  when: item.ip.split(' ').0 | ipaddr( local_network | ansible.utils.ipaddr('subnet') )
+  loop: "{{ ifaces.meta[0].results }}"
+
+- name: Configure Firewall Policy for Local Address
+  fortios_firewall_policy:
+    state: present
+    firewall_policy:
+      name: "{{ p2_name }}-local"
+      policyid: "{{ local_id }}"
+      action: accept
+      srcintf:
+        - name: "{{ p2_intf }}"
+      dstintf:
+        - name: "{{ p1_name }}"
+      srcaddr:
+        - name: "{{ p2_name }}-local"
+      dstaddr:
+        - name: "{{ p2_name }}-remote"
+      service:
+        - name: "ALL"
+      schedule: "always"
+      nat: "disable"
+      
+- name: Configure Firewall Policy for Remote Address
+  fortios_firewall_policy:
+    state: present
+    firewall_policy:
+      name: "{{ p2_name }}-remote"
+      policyid: "{{ remote_id }}"
+      action: accept
+      srcintf:
+        - name: "{{ p1_name }}"
+      dstintf:
+        - name: "{{ p2_intf }}"
+      srcaddr:
+        - name: "{{ p2_name }}-remote"
+      dstaddr:
+        - name: "{{ p2_name }}-local"
+      service:
+        - name: "ALL"
+      schedule: "always"
+      nat: "disable"

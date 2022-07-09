@@ -1,0 +1,47 @@
+---
+- name: Check if DHCP Range is valid
+  fail:
+    msg: "Invalid DHCP Range"
+  when: ( start_ip | ansible.utils.ipaddr(ip_address | ansible.utils.ipaddr('subnet')) != start_ip ) or ( end_ip | ansible.utils.ipaddr(ip_address | ansible.utils.ipaddr('subnet')) != end_ip )
+
+- name: "{{ action | upper }} DHCP Server"
+  fortios_system_dhcp_server:
+    state: present
+    system_dhcp_server:
+      id: "{{ id }}"
+      status: "{{ dhcp_status }}"
+      lease_time: "{{ lease_time }}"
+      mac_acl_default_action: assign
+      forticlient_on_net_status: enable
+      wifi_ac_service: specify
+      wifi_ac1: 0.0.0.0
+      wifi_ac2: 0.0.0.0
+      wifi_ac3: 0.0.0.0
+      dns_service: specify
+      dns_server1: "{{ dns_server1 }}"
+      dns_server2: "{{ dns_server2 }}"
+      dns_server3: "{{ dns_server3 }}"
+      dns_server4: "{{ dns_server4 }}"
+      ntp_service: specify
+      domain: ''
+      wins_server1: 0.0.0.0
+      wins_server2: 0.0.0.0
+      default_gateway: "{{ default_gateway }}"
+      next_server: 0.0.0.0
+      netmask: "{{ netmask }}"
+      interface: "{{ port }}"
+      ip_range:
+      - id: "{{ range_id }}"
+        start_ip: "{{ start_ip }}"
+        end_ip: "{{ end_ip }}"
+      auto_configuration: enable
+      timezone_option: disable
+      filename: ''
+      server_type: regular
+      conflicted_ip_timeout: 1800
+      dhcp_settings_from_fortiipam: disable
+      ddns_update: disable
+      vci_match: disable
+      ntp_server1: "{{ ntp_server1 }}"
+      ntp_server2: "{{ ntp_server2 }}"
+      ntp_server3: "{{ ntp_server3 }}" 

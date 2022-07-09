@@ -1,0 +1,39 @@
+---
+- name: Remove Port Forwarding
+  block:
+    - name: Remove Firewall Rule
+      fortios_firewall_policy:
+        state: absent
+        firewall_policy:
+          policyid: "{{ fw_policyid }}"
+
+    - name: Remove FW Address Group
+      fortios_firewall_addrgrp:
+        state: "absent"
+        firewall_addrgrp:
+          name: "Address Group {{ extip }} TO {{ mappedip }}"
+
+    - name: Remove FW Address
+      fortios_firewall_address:
+        state: "absent"
+        firewall_address:
+          name: "Allow Address {{ item }} {{ extip }} TO {{ mappedip }}"
+      loop: "{{srcaddr}}"
+
+    - name: Remove VIP Group
+      fortios_firewall_vipgrp:
+        state: "absent"
+        firewall_vipgrp:
+          name: "{{ extip }} TO {{ mappedip }} PF GROUP"
+
+    - name: Remove VIP
+      fortios_firewall_vip:
+        state: absent
+        firewall_vip:
+          id: "{{ vip_id }}"
+          name: "Port Forward {{ extip }} TO {{ mappedip }}"
+      register: result
+
+    - name: Display Reponse
+      debug:
+        msg: "{{ result }}"

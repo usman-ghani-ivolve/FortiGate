@@ -1,0 +1,114 @@
+---
+- name: Configure Port Forwarding
+  block:
+    - name: Create VIP
+      fortios_firewall_vip:
+        state: present
+        firewall_vip:
+          id: "{{ vip_id }}"
+          name: "Port Forward {{ extip }} TO {{ mappedip }}"
+          type: "static-nat"
+          extip: "{{ extip }}"
+          nat44: "enable"
+          nat46: "disable"
+          mappedip:
+            - range: "{{ mappedip }}"
+          extintf: "{{ extintf }}"
+          arp_reply: "enable"
+          nat_source_vip: "disable"
+          portforward: "enable"
+          protocol: "{{ protocol }}"
+          extport: "{{ extport }}"
+          mappedport: "{{ mappedport }}"
+          portmapping_type: "1-to-1"
+
+    - name: Create VIP Group
+      fortios_firewall_vipgrp:
+        state: "present"
+        firewall_vipgrp:
+          name: "{{ extip }} TO {{ mappedip }} PF GROUP"
+          interface: "{{ extintf }}"
+          member:
+            - name: "Port Forward {{ extip }} TO {{ mappedip }}"
+
+    - name: Add FW Address
+      fortios_firewall_address:
+        state: "present"
+        firewall_address:
+          name: "Allow Address {{ item }} {{ extip }} TO {{ mappedip }}"
+          type: ipmask
+          subnet: "{{ item }}"
+      loop: "{{srcaddr}}"
+
+    - name: Add FW Address Group
+      fortios_firewall_addrgrp:
+        state: "present"
+        firewall_addrgrp:
+          name: "Address Group {{ extip }} TO {{ mappedip }}"
+          member: "{{ fw_members }}"
+
+    - name: Add Firewall Rule
+      fortios_firewall_policy:
+        state: present
+        firewall_policy:
+          name: "{{ extip }} TO {{ mappedip }}"
+          policyid: "{{ fw_policyid }}"
+          action: accept
+          srcintf:
+            - name: "{{ srcintf }}"
+          dstintf: 
+            - name: "{{ dstintf }}"
+          srcaddr:
+            - name: "Address Group {{ extip }} TO {{ mappedip }}"
+          dstaddr: 
+            - name: "{{ extip }} TO {{ mappedip }} PF GROUP"
+          service: 
+            - name: "ALL"
+          schedule: "always"
+          nat: "disable"
+      register: response
+
+    - name: Display Reponse
+      debug:
+        msg: "{{ response }}"
+  when: action == "add"
+
+- name: Remove Port Forwarding
+  block:
+    - name: Remove Firewall Rule
+      fortios_firewall_policy:
+        state: absent
+        firewall_policy:
+          policyid: "{{ fw_policyid }}"
+
+    - name: Remove FW Address Group
+      fortios_firewall_addrgrp:
+        state: "absent"
+        firewall_addrgrp:
+          name: "Address Group {{ extip }} TO {{ mappedip }}"
+
+    - name: Remove FW Address
+      fortios_firewall_address:
+        state: "absent"
+        firewall_address:
+          name: "Allow Address {{ item }} {{ extip }} TO {{ mappedip }}"
+      loop: "{{srcaddr}}"
+
+    - name: Remove VIP Group
+      fortios_firewall_vipgrp:
+        state: "absent"
+        firewall_vipgrp:
+          name: "{{ extip }} TO {{ mappedip }} PF GROUP"
+
+    - name: Remove VIP
+      fortios_firewall_vip:
+        state: absent
+        firewall_vip:
+          id: "{{ vip_id }}"
+          name: "Port Forward {{ extip }} TO {{ mappedip }}"
+      register: response
+
+    - name: Display Reponse
+      debug:
+        msg: "{{ response }}"
+  when: action == "remove"

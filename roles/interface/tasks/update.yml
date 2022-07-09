@@ -1,0 +1,41 @@
+---
+- name: Check if ip address is valid
+  fail: 
+    msg: Invalid IP Address
+  when: ip_address | ansible.utils.ipaddr('address') == false
+
+- name: Get Firewall Interface
+  fortinet.fortios.fortios_configuration_fact:
+    selectors:
+      - selector: "system_interface"
+  register: ifaces
+
+- name: Fetch Firewall Port
+  set_fact:
+    port: "{{ item.name }}"
+  when: item.ip.split(' ').0 == old_ip_address | ansible.utils.ipaddr('address')
+  loop: "{{ ifaces.meta[0].results }}"
+
+- name: Configure Interface
+  fortios_system_interface:
+    vdom: root
+    state: present
+    system_interface:
+      vdom: root
+      name: "{{ port }}"
+      ip: "{{ ip_address }}"
+      type: "physical"
+      alias: "{{ name }}"
+  register: result
+
+- name: Get DHCP Config
+  fortinet.fortios.fortios_configuration_fact:
+    selectors:
+      - selector: "system.dhcp_server"
+  register: data
+
+- name: Update DHCP
+  include_tasks: ./roles/dhcp/tasks/configure.yml
+
+- debug:
+    msg: "{{ result }}"

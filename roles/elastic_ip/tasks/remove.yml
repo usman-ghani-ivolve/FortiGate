@@ -1,0 +1,9 @@
+---
+- name: Remove Elastic IP
+  fortios_firewall_vip:
+    state: absent
+    firewall_vip:
+      name: "{{ extip }}"
+  register: result
+- debug:
+    msg: "{{result}}"

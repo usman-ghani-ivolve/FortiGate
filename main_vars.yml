@@ -1,0 +1,135 @@
+########### ESSENTIALS ###########
+ansible_network_os: 'fortios'
+ansible_httpapi_use_ssl: yes
+ansible_httpapi_validate_certs: no
+ansible_httpapi_port: 443
+
+########### BOOTSTRAP ###########
+# tenant_id: "000000"
+# admin_password: "letmein"
+# wan_ip: "20.30.40.50"
+# wan_subnet: "255.255.255.0"
+# wan_gateway: "20.30.40.1"
+# mgmt_ip: "10.0.0.50"
+# mgmt_gateway: "10.0.0.1"
+# mgmt_subnet: "255.255.255.0"
+# lan_ip: "192.168.1.254"
+# lan_subnet: "255.255.255.0"
+# dhcp_start: "192.168.1.10"
+# dhcp_end: "192.168.1.253"
+# dns_server: "8.8.8.8"
+# ntp_server: "0.0.0.0"
+
+########### INTERFACE ###########
+# old_ip_address: 192.168.100.254/24
+# ip_address: 192.168.1.254/24
+# name: LAN-1
+
+########### DHCP ###########
+# id: "1"
+# default_gateway: "{{ ip_address | ipaddr('address') }}"
+# netmask: "{{ ip_address | ipaddr('netmask') }}"
+# range_id: "1"
+# start_ip: "192.168.1.1"
+# end_ip: "192.168.1.253"
+# dns_server1: "8.8.8.8"
+# dns_server2: "0.0.0.0"
+# dns_server3: "0.0.0.0"
+# dns_server4: "0.0.0.0"
+# ntp_server1: "0.0.0.0"
+# ntp_server2: "0.0.0.0"
+# ntp_server3: "0.0.0.0"
+# lease_time: "604800"
+# dhcp_status: enable
+
+########### NAT ###########
+# id: "50"
+# srcintf:  ["name": "port1"]
+# dstintf: ["name": "port3"]
+# srcaddr: ["name": "all"]
+# dstaddr: ["name": "webserver vips"]
+# service: ["name": "ALL"]
+# schedule: "always"
+# action: "add"
+
+########### PORT FWD ###########
+# role: port_forward
+# action: add
+# vip_id: "11"
+# fw_policyid: "11"
+# extip: "10.82.51.20"
+# extport: "2222"
+# mappedip: "192.168.1.1"
+# mappedport: "22"
+# extintf: "port1"
+# protocol: "tcp"
+# srcintf: "port1"
+# dstintf: "port3"
+# srcaddr: [119.159.226.50/32, 192.168.0.0/24, 10.0.0.0/24]
+# fw_members: [
+#   {
+#     "name": "Allow Address 119.159.226.50/32 {{ extip }} TO {{ mappedip }}"
+#   },
+#   {
+#     "name": "Allow Address 192.168.0.0/24 {{ extip }} TO {{ mappedip }}"
+#   }
+# ]
+
+########### EIP ###########
+# role: elastic_ip
+# action: "add"
+# vip_id: "50"
+# extip: "10.82.21.201/16"
+# mappedip: "192.168.1.1/24"
+# extintf: "port1"
+
+########### FIREWALL ###########
+# role: firewall
+# action: add
+# name: elastic_ip_access
+# fw_action: accept # accept deny 
+# service: [ALL]
+# srcaddr: ["0.0.0.0/0"]
+# nat: disable
+# dstaddr: ["10.82.21.201/16"]
+# srcintf: port1
+# dstintf: port3
+# id: 15   #show between (0 - 4294967294).
+
+########### GET CONFIG ###########
+# config_selector: ["firewall.service_category"]
+# config_selector: ["firewall.service_custom"]
+# config_selector: ["firewall.service_group"]
+# config_selector: ["vpn.ipsec_phase1-interface"]
+
+########### VPN ###########
+# role: vpn
+#====== P1 ========#
+# action: remove_p1
+# p1_name: "s2s-p1"
+# ip_version: '4'
+# ike_version: '2'
+# remote_gw: '10.82.3.125'
+# local_gw: '10.82.51.20'
+# dhgrp: '14'
+# p1_proposal: ['aes128-sha256']
+# psksecret: '4b7d62f964784846a0e58e4f56245d30237e71dfc10b759066ab2f69'
+# keepalive_freq: '10'
+# dpd: 'on-demand'
+# dpd_retrycount: '3'
+# dpd_retryinterval: '20'
+# keylife: '86400'
+# negotiate_timeout: '30'
+# nattraversal: 'enable'
+# reauth: 'disable'
+# rekey: 'enable'
+#====== P1 ========#
+# action: remove_p2
+# p2_name: "s2s-p2-1"
+# local_network: '192.168.1.0/24'
+# remote_networks: ['10.20.30.0/24']
+# p2_proposal: ['aes128-sha256', 'aes128gcm']
+# dhgrp: '14'
+# keylifeseconds: '43200'
+# local_id: 21
+# remote_id: 22

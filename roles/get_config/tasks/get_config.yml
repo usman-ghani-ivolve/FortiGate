@@ -1,0 +1,11 @@
+---
+- name: Get Config #{% for i in config_selector %} {{ config_selector[i] }} {% endfor %}
+  fortinet.fortios.fortios_configuration_fact:
+    selectors: ##"{{ config_selector }}"
+      - selector: "{{item}}"
+  loop: "{{config_selector}}"
+  register: response
+  
+- name: Display Configuration
+  debug:
+    msg: "{{ response }}"

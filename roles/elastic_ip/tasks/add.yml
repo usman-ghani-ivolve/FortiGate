@@ -1,0 +1,21 @@
+---
+- name: Create VIP
+  fortios_firewall_vip:
+    state: present
+    firewall_vip:
+      id: "{{ vip_id }}"
+      name: "{{ extip }}"
+      type: "static-nat"
+      extip: "{{ extip | ipaddr('address') }}"
+      nat44: "enable"
+      nat46: "disable"
+      mappedip:
+        - range: "{{ mappedip | ipaddr('address') }}"
+      extintf: "{{ extintf }}"
+      arp_reply: "enable"
+      nat_source_vip: "disable"
+      portforward: "disable"
+  register: result
+  
+- debug:
+    msg: "{{result}}"

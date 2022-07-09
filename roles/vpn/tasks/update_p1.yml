@@ -1,0 +1,78 @@
+---
+- name: Get Tunnels Info
+  fortinet.fortios.fortios_configuration_fact:
+    selectors:
+      - selector: "vpn.ipsec_phase1-interface"
+  register: ipsec_p1
+
+- name: Fetch Tunnel Name
+  set_fact:
+    tunnels: "{{ tunnels | default([]) + [item.name] }}"
+  loop: "{{ ipsec_p1.meta[0].results }}"
+
+- name: Fail if Tunnel Does Not Exist
+  fail:
+    msg: "Tunnel \"{{p1_name}}\" not found"
+  when: p1_name is not in tunnels
+
+- name: Get Interface Names
+  fortinet.fortios.fortios_configuration_fact:
+    selectors:
+      - selector: "system_interface"
+  register: ifaces
+
+- name: Set Interface Variable
+  set_fact:
+    p1_intf: "{{ item.name }}"
+  when: local_gw in item.ip
+  loop: "{{ ifaces.meta[0].results }}"
+  
+- name: Configure IPSec Phase1 Interface
+  fortios_vpn_ipsec_phase1_interface:
+    state: "present"
+    vpn_ipsec_phase1_interface:
+      name: "{{ p1_name }}"
+      type: "static"
+      interface: "{{ p1_intf }}"
+      ip_version: "{{ ip_version }}"
+      ike_version: "{{ ike_version }}"
+      local_gw: "0.0.0.0"
+      keylife: "{{ keylife }}"
+      authmethod: "psk"
+      peertype: "any"
+      net_device: "disable"
+      passive_mode: "disable"
+      exchange_interface_ip: "enable"
+      aggregate_member: "disable"
+      mode_cfg: "disable"
+      proposal: "{{ p1_proposal }}"
+      localid: ""
+      localid_type: "auto"
+      auto_negotiate: "enable"
+      negotiate_timeout: "{{ negotiate_timeout }}"
+      fragmentation: "enable"
+      ip_fragmentation: "post-encapsulation"
+      dpd: "{{ dpd }}"
+      forticlient_enforcement: "disable"
+      dhgrp: "{{ dhgrp }}"
+      wizard_type: "custom"
+      reauth: "{{ reauth }}"
+      idle_timeout: "disable"
+      auto_discovery_forwarder: "enable"
+      auto_discovery_psk: "disable"
+      auto_discovery_receiver: "disable"
+      auto_discovery_sender: "disable"
+      encapsulation: "none"
+      nattraversal: "{{ nattraversal }}"
+      fragmentation_mtu: "1200"
+      childless_ike: "disable"
+      rekey: "{{ rekey }}" 
+      fec_egress: "disable"
+      fec_ingress: "disable"
+      network_overlay: "disable"
+      remote_gw: "{{ remote_gw }}"
+      add_gw_route: "disable"
+      psksecret: "{{ psksecret }}"
+      keepalive: "{{ keepalive_freq}}"
+      dpd_retrycount: "{{ dpd_retrycount }}"
+      dpd_retryinterval: "{{ dpd_retryinterval }}"

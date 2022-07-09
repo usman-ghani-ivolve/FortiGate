@@ -1,0 +1,89 @@
+---
+- block:
+  - name: Get Firewall Addresses
+    fortinet.fortios.fortios_configuration_fact:
+      selectors:
+        - selector: "firewall_address"
+    register: "addresses"
+  - name: Parse Firewall Addresses
+    set_fact:
+      fw_addresses: "{{ fw_addresses | default([]) + [item.name] }}"
+    loop: "{{ addresses.meta[0].results }}"
+  - name: Get Firewall Virtual IPs
+    fortinet.fortios.fortios_configuration_fact:
+      selectors:
+        - selector: "firewall_vip"
+    register: "vip"
+  - name: Parse Firewall Virtual IPs
+    set_fact:
+      vips: "{{ vips | default([]) + [item.name] }}"
+    loop: "{{ vip.meta[0].results }}"
+  - name: Get Firewall Virtual IP Groups
+    fortinet.fortios.fortios_configuration_fact:
+      selectors:
+        - selector: "firewall_vipgrp"
+    register: "vipgrp"
+  - name: Parse Firewall Virtual IP Groups
+    set_fact:
+      vipgrps: "{{ vipgrps | default([]) + [item.name] }}"
+    loop: "{{ vipgrp.meta[0].results }}"
+  - name: Parsing srcaddr var
+    set_fact:
+      src_addr: '{{ src_addr | default([]) + [{"name": item}] }}'
+    loop: "{{srcaddr}}"
+  - name: Parsing dstaddr var
+    set_fact:
+      dest_addr: '{{ dest_addr | default([]) + [{"name": item}] }}'
+    loop: "{{dstaddr}}"
+  - name: Parsing service var
+    set_fact:
+      svc: '{{ svc | default([]) + [{"name": item}] }}'
+    loop: "{{service}}"
+
+- name: Create Firewall Addresses for Source IP
+  fortios_firewall_address:
+    state: "present"
+    firewall_address:
+      allow_routing: "enable"
+      associated_interface: ""
+      fabric_object: "disable"
+      name: "{{item}}"
+      subnet: "{{item}}"
+      type: "ipmask"
+  when: (item is not in vips) and (item is not in fw_addresses) and (item is not in vipgrps)
+  loop: "{{ srcaddr }}"
+
+- name: Create Firewall Addresses for Destination IP
+  fortios_firewall_address:
+    state: "present"
+    firewall_address:
+      allow_routing: "enable"
+      associated_interface: ""
+      fabric_object: "disable"
+      name: "{{item}}"
+      subnet: "{{item}}"
+      type: "ipmask"
+  when: (item is not in vips) and (item is not in fw_addresses) and (item is not in vipgrps)
+  loop: "{{ dstaddr }}"
+
+- name: Configure Firewall Policy
+  fortios_firewall_policy:
+    state: present
+    firewall_policy:
+      name: "{{ name }}"
+      policyid: "{{ id }}"
+      action: "{{ fw_action }}"
+      srcintf:
+        - name: "{{ srcintf }}"
+      dstintf:
+        - name: "{{ dstintf }}"
+      srcaddr: "{{ src_addr }}"
+      dstaddr: "{{ dest_addr }}"
+      service: "{{ svc }}"
+      schedule: "always"
+      nat: "{{ nat }}"
+  register: result
+
+- name: Get Response
+  debug:
+    msg: "{{ result }}"
