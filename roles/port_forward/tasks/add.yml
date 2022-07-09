@@ -9,8 +9,8 @@
           name: "Port Forward {{ extip }} TO {{ mappedip }}"
           type: "static-nat"
           extip: "{{ extip }}"
-          nat44: "enable"
-          nat46: "disable"
+          # nat44: "enable"
+          # nat46: "disable"
           mappedip:
             - range: "{{ mappedip }}"
           extintf: "{{ extintf }}"
