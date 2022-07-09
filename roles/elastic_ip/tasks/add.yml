@@ -7,8 +7,8 @@
       name: "{{ extip }}"
       type: "static-nat"
       extip: "{{ extip | ipaddr('address') }}"
-      nat44: "enable"
-      nat46: "disable"
+      # nat44: "enable"
+      # nat46: "disable"
       mappedip:
         - range: "{{ mappedip | ipaddr('address') }}"
       extintf: "{{ extintf }}"
